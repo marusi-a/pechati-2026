@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Печати 2026</title>
+<meta name="theme-color" content="#15181B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Печати">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app" id="app" data-view="route">
+
+  <!-- ========== МАРШРУТ ========== -->
+  <section class="view" id="v-route">
+    <header class="top">
+      <div class="top-txt">
+        <p class="eyebrow" id="dayLabel">День 01 · Петроградская сторона</p>
+        <h1>Мой маршрут</h1>
+      </div>
+      <button class="icon-btn" id="toMap" aria-label="Открыть карту">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Zm0 0v14m6-11.5v14"/></svg>
+      </button>
+    </header>
+
+    <div class="scroll" id="routeScroll">
+
+      <!-- прогресс -->
+      <article class="card hero" id="heroCard">
+        <p class="kicker" id="heroKicker">Маршрут 01 / 02</p>
+        <h2 class="hero-q" id="heroTitle">Где ты был сегодня?</h2>
+        <div class="hero-row">
+          <span class="hero-sub" id="heroSub">13 мест отмечено</span>
+          <span class="hero-pct" id="heroPct">22%</span>
+        </div>
+        <div class="track"><i id="heroBar"></i></div>
+      </article>
+
+      <!-- маршрут на сегодня -->
+      <article class="card" id="stepCard">
+        <div class="card-head">
+          <span class="ch-left">
+            <svg class="ch-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/></svg>
+            Маршрут на сегодня
+          </span>
+          <span class="ch-right" id="stepKm">12,5 км</span>
+        </div>
+
+        <div class="stepper" id="stepper"><div class="sk sk-step"></div></div>
+
+        <div class="here" id="hereBox">
+          <span class="here-pin" id="herePin">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          </span>
+          <span class="here-txt">
+            <b class="here-lbl" id="hereLabel">Следующая точка</b>
+            <b class="here-name" id="hereName">—</b>
+          </span>
+          <span class="here-dist" id="hereDist"></span>
+        </div>
+      </article>
+
+      <!-- CTA -->
+      <button class="cta" id="markBtn">
+        <span class="cta-ico" aria-hidden="true">+</span>
+        <span class="cta-txt">Отметить место</span>
+        <span class="spin" aria-hidden="true"></span>
+      </button>
+      <p class="cta-hint" id="ctaHint">Определим геопозицию и найдём ближайшую точку</p>
+
+      <!-- штампы -->
+      <div class="sec-head">
+        <h3>Последние штампы</h3>
+        <button class="link" id="toStamps">Все <span id="stampCount">13</span> →</button>
+      </div>
+      <div class="rail" id="rail"><div class="sk sk-stamp"></div><div class="sk sk-stamp"></div><div class="sk sk-stamp"></div></div>
+
+      <div class="tail-note">
+        <p>Список печатей живой — автор добавляет точки почти каждый день. Нашли печать, которой тут нет?</p>
+        <button class="ghost-btn" id="suggestBtn">Предложить место</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ШТАМПЫ ========== -->
+  <section class="view" id="v-stamps">
+    <header class="top">
+      <div class="top-txt">
+        <p class="eyebrow">Коллекция</p>
+        <h1>Штампы</h1>
+      </div>
+    </header>
+    <div class="scroll">
+      <div class="seg" id="stampSeg" role="group" aria-label="Фильтр штампов">
+        <button data-f="all" aria-pressed="true">Все</button>
+        <button data-f="got" aria-pressed="false">Собраны</button>
+        <button data-f="left" aria-pressed="false">Осталось</button>
+      </div>
+      <div class="grid" id="stampGrid"></div>
+      <div class="empty" id="stampEmpty" hidden>
+        <span class="empty-ico">🖃</span>
+        <b>Пока пусто</b>
+        <p>Отметьтесь на первой точке маршрута — штамп появится здесь.</p>
+        <button class="ghost-btn" data-go="route">К маршруту</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== КАРТА ========== -->
+  <section class="view" id="v-map">
+    <div class="map-wrap">
+      <div id="map"></div>
+      <canvas id="mapFallback" hidden></canvas>
+      <div class="map-load" id="mapLoad"><span class="spin dark"></span> Загружаем карту…</div>
+      <div class="map-top">
+        <div class="seg map-seg" id="mapSeg" role="group" aria-label="Маршрут на карте"></div>
+      </div>
+      <button class="fab" id="locBtn" aria-label="Показать моё положение">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.2M12 18.8V22M2 12h3.2M18.8 12H22"/></svg>
+      </button>
+      <div class="map-card" id="mapCard" hidden></div>
+    </div>
+  </section>
+
+  <!-- ========== ПРОФИЛЬ ========== -->
+  <section class="view" id="v-profile">
+    <header class="top">
+      <div class="top-txt">
+        <p class="eyebrow">Печати 2026</p>
+        <h1>Профиль</h1>
+      </div>
+    </header>
+    <div class="scroll">
+      <div class="stats" id="stats"></div>
+
+      <div class="rows">
+        <button class="row" id="rowSuggest">
+          <span class="row-ico">✎</span>
+          <span class="row-txt"><b>Мои находки</b><small id="suggestState">Печать, которой нет в списке</small></span>
+          <span class="row-arr">→</span>
+        </button>
+        <button class="row" id="rowExport">
+          <span class="row-ico">⇩</span>
+          <span class="row-txt"><b>Выгрузить прогресс</b><small>JSON-файл с отметками</small></span>
+          <span class="row-arr">→</span>
+        </button>
+        <button class="row" id="rowReset">
+          <span class="row-ico">↺</span>
+          <span class="row-txt"><b>Сбросить прогресс</b><small>Вернуть 13 точек за 9 августа</small></span>
+          <span class="row-arr">→</span>
+        </button>
+      </div>
+
+      <p class="fine" id="fine">Источник точек — публичный список закладок Яндекс Карт <b>OLdDxtRu</b>, ревизия 1201 от 9 августа 2026. Условия печатей взяты из комментариев авторов и не проверялись.</p>
+    </div>
+  </section>
+
+  <!-- ========== НИЖНЯЯ НАВИГАЦИЯ ========== -->
+  <nav class="nav" id="nav">
+    <button data-go="route" class="on">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Zm0 0v14m6-11.5v14"/></svg>
+      <span>Маршрут</span>
+    </button>
+    <button data-go="stamps">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 17h10l-1-6.2a4 4 0 0 0-1.6-2.6l-.6-.4.5-2.3A2 2 0 0 0 12.3 3h-.6a2 2 0 0 0-2 2.5l.5 2.3-.6.4A4 4 0 0 0 8 10.8L7 17Z"/></svg>
+      <span>Штампы</span>
+    </button>
+    <button data-go="map">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 4-4 2 2-4 4-2Z"/></svg>
+      <span>Карта</span>
+    </button>
+    <button data-go="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ========== ШТОРКА ========== -->
+<div class="sheet-host" id="sheetHost" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<!-- ========== ШТАМП ========== -->
+<div class="reveal" id="reveal" hidden>
+  <div class="reveal-in">
+    <p class="reveal-kick" id="revealKick">Новый штамп</p>
+    <div id="revealStamp"></div>
+    <h2 class="reveal-name" id="revealName"></h2>
+    <p class="reveal-note" id="revealNote"></p>
+    <button class="cta" id="revealClose"><span class="cta-txt">Готово</span></button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
