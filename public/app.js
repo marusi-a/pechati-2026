@@ -37,6 +37,17 @@ function seedDone() {
   return S.points.filter(p => p.seed).map(p => p.id);
 }
 
+/* До версии с автообновлением id были позиционными («П08»), и вставка новой
+   точки в середину маршрута сдвигала отметки на соседние места. Теперь id —
+   хэш от названия с адресом; сохранённый прогресс переводим на новые по позиции. */
+function migrateIds(saved) {
+  const old = new Map();
+  S.data.routes.forEach(r => r.points.forEach((p, i) => {
+    old.set(`${r.code}${String(i + 1).padStart(2, '0')}`, p.id);
+  }));
+  return saved.map(x => old.get(x) || x).filter(x => S.points.some(p => p.id === x));
+}
+
 /* ───────────────────────── утилиты ───────────────────────── */
 
 function dist(a, b) {                       // метры, гаверсинус
@@ -821,7 +832,8 @@ window.addEventListener('resize', () => { if (S.fallback && S.view === 'map') dr
   }
   S.points = S.data.routes.flatMap(r => r.points);
   const saved = load();
-  S.done = new Set(saved || seedDone());
+  S.done = new Set(saved ? migrateIds(saved) : seedDone());
+  if (saved) save();
   S.mapRoute = activeRoute().id;
   S.ready = true;
   renderMapSeg();
