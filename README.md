@@ -103,10 +103,28 @@ for l in open('var/suggestions.jsonl'):
 
 ## Обновление точек
 
-Список закладок живой — автор правит его несколько раз в день. Сверка автоматическая:
+Список закладок живой — автор правит его несколько раз в день.
+
+> **Сейчас автосверка не работает:** GitHub блокирует Actions на аккаунте
+> из-за проблемы с оплатой (`the job was not started because your account is
+> locked due to a billing issue`). Сам сайт это не задевает — Pages собирается
+> отдельно и обновляется как обычно. Чтобы расписание заработало, нужно
+> разобраться с биллингом на <https://github.com/settings/billing>;
+> для публичных репозиториев Actions потом бесплатны и безлимитны.
+
 `.github/workflows/sync.yml` дважды в сутки (08:00 и 20:00 МСК) запускает
-`tools/sync_points.py --apply`, и если что-то нашлось — коммитит и выкладывает сайт.
+`tools/sync_points.py --apply` и, если что-то нашлось, коммитит и выкладывает сайт.
 Запустить руками: вкладка **Actions → Сверка со списком → Run workflow**.
+
+Пока Actions заблокированы, то же самое делается с ноутбука одной строкой:
+
+```bash
+python3 tools/sync_points.py --apply && git add -A && git commit -m 'сверка' \
+  && git push origin main && git subtree push --prefix public origin gh-pages
+```
+
+Или по расписанию с любого сервера, где есть python3 и доступ к репозиторию —
+той же командой из cron.
 
 ```bash
 python3 tools/sync_points.py             # отчёт, ничего не трогает
