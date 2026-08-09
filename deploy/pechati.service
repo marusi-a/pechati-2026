@@ -1,0 +1,24 @@
+[Unit]
+Description=Печати 2026 — приём предложенных мест
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/pechati
+Environment=HOST=127.0.0.1
+Environment=PORT=8781
+ExecStart=/usr/bin/python3 /srv/pechati/server.py
+Restart=on-failure
+RestartSec=3
+
+# сервису нужно писать только в var/
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/srv/pechati/var
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+# Печати 2026 через Caddy: сертификат выпускается сам.
+# Замените домен и перезапустите: sudo systemctl reload caddy
+
+ПЕЧАТИ.ВАШ-ДОМЕН {
+    root * /srv/pechati/public
+    encode gzip
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    @own path *.html *.js *.css *.json *.webmanifest
+    header @own Cache-Control "no-cache"
+    header /vendor/* Cache-Control "public, max-age=604800, immutable"
+
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8781
+    }
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}
