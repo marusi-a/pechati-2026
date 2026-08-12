@@ -125,8 +125,9 @@ function renderHero() {
   const r = activeRoute();
   const first = S.points[0];
 
-  $('#dayLabel').textContent = `День 0${r.id} · ${r.title}`;
-  $('#heroKicker').textContent = `Маршрут 0${r.id} / 0${S.data.routes.length}`;
+  const nn = n => String(n).padStart(2, '0');   // маршрутов уже больше девяти
+  $('#dayLabel').textContent = `День ${nn(r.id)} · ${r.title}`;
+  $('#heroKicker').textContent = `Маршрут ${nn(r.id)} / ${nn(S.data.routes.length)}`;
   $('#heroTitle').textContent =
     got === 0     ? `Начнём с «${first.name}»` :
     got === total ? 'Все печати собраны' : 'Где ты был сегодня?';
@@ -228,7 +229,24 @@ function renderMapSeg() {
   $('#mapSeg').innerHTML = S.data.routes.map(r =>
     `<button data-r="${r.id}" aria-pressed="${r.id === S.mapRoute}">${esc(r.short || r.title)}</button>`
   ).join('');
+  scrollSegIntoView();
 }
+
+/* Маршрутов полтора десятка, полоса переключателя прокручивается —
+   подтягиваем активную кнопку в видимую часть. */
+function scrollSegIntoView() {
+  const box = $('#mapSeg');
+  if (!box) return;
+  // после innerHTML ширины ещё нулевые, поэтому ждём кадр; таймер —
+  // страховка на случай, когда rAF не идёт (свёрнутая вкладка)
+  const go = () => {
+    const on = box.querySelector('button[aria-pressed="true"]');
+    if (on && box.clientWidth) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+  };
+  requestAnimationFrame(go);
+  setTimeout(go, 120);
+}
+
 
 function renderAll() {
   renderHero(); renderStepper(); renderRail(); renderStamps(); renderProfile();
