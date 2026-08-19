@@ -267,6 +267,13 @@ def stable_id(code, name, addr):
     return f"{code}-{hashlib.sha1(f'{name}|{addr}'.encode()).hexdigest()[:6]}"
 
 
+def route_km(route):
+    """Пеший километраж: сумма отрезков по прямым с поправкой 1.2 на изгибы улиц."""
+    pts = route["points"]
+    raw = sum(dist(pts[i], pts[i + 1]) for i in range(len(pts) - 1)) / 1000
+    return round(raw * 1.2, 1)
+
+
 def renumber(route):
     for k, p in enumerate(route["points"], 1):
         p["i"] = k
@@ -336,6 +343,7 @@ def main():
     ap.add_argument("--apply", action="store_true", help="вписать близкие точки в маршруты")
     ap.add_argument("--clusters", action="store_true", help="показать заготовки под новые маршруты")
     ap.add_argument("--detour", type=int, default=DETOUR_M, help="предельный крюк, метров")
+    ap.add_argument("--max", type=int, default=MAX_PTS, help="потолок точек в маршруте")
     a = ap.parse_args()
 
     data = json.loads(POINTS.read_text(encoding="utf-8"))
@@ -382,7 +390,7 @@ def main():
 
     # Маршрут — это один день ходьбы. Даже если точка ложится рядом,
     # в переполненный маршрут её не суём: пусть ждёт в кандидатах.
-    room = {r["id"]: max(0, MAX_PTS - len(r["points"])) for r in data["routes"]}
+    room = {r["id"]: max(0, a.max - len(r["points"])) for r in data["routes"]}
     fits, far, full = [], [], []
     for p in free:
         opts = [(best_insertion(r["points"], p), r) for r in data["routes"]]
@@ -405,7 +413,7 @@ def main():
 
     if full:
         by = Counter(x[2]["short"] for x in full)
-        print(f"\nрядом, но маршрут уже полон ({MAX_PTS} точек): "
+        print(f"\nрядом, но маршрут уже полон ({a.max} точек): "
               f"{', '.join(f'{k} +{v}' for k, v in by.items())}")
         print("  им пора в отдельный маршрут — смотрите --clusters")
 
@@ -436,6 +444,7 @@ def main():
         })
     for r in data["routes"]:
         renumber(r)
+        r["km"] = route_km(r)
     data["revision"] = lst["revision"]
     data["updated"] = time.strftime("%Y-%m-%d")
     POINTS.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

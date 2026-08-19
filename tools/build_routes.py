@@ -193,7 +193,7 @@ def cmd_build(data):
         data["routes"].append({
             "id": max(r["id"] for r in data["routes"]) + 1,
             "code": spec["code"], "short": spec["short"], "title": spec["title"],
-            "sub": f"{pts[0]['name']} → {pts[-1]['name']}",
+            "sub": f"{pts[0]['name']} → {pts[-1]['name']}" + spec.get("sub_extra", ""),
             "km": spec["km"], "points": pts,
         })
         used.add(spec["code"])
